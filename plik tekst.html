@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generator Ikon Konferencji</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Georgia', serif;
+            margin: 20px;
+            background-color: #f7f7f7;
+        }
+        .checkbox-container {
+            margin-bottom: 20px;
+        }
+        canvas {
+            border: 1px solid #ccc;
+            display: block;
+            margin-top: 20px;
+            background-color: rgba(255, 255, 255, 0.0); /* Tło przezroczyste */
+        }
+        button {
+            font-family: 'Georgia', serif;
+            font-size: 18px;
+            padding: 10px 20px;
+            margin-top: 10px;
+            cursor: pointer;
+            border: none;
+            background-color: #4CAF50;
+            color: white;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        a {
+            display: inline-block;
+            margin-top: 10px;
+            font-family: 'Georgia', serif;
+            font-size: 16px;
+            color: #0000ee;
+        }
+    </style>
+</head>
+<body>
+    <h1>Generator Ikon Konferencji</h1>
+    <div class="checkbox-container">
+        <label><input type="checkbox" value="Oświetlenie" data-icon="fa-lightbulb"> Oświetlenie</label><br>
+        <label><input type="checkbox" value="Projektor" data-icon="fa-video"> Projektor</label><br>
+        <label><input type="checkbox" value="Wi-Fi" data-icon="fa-wifi"> Wi-Fi</label><br>
+        <label><input type="checkbox" value="Nagłośnienie" data-icon="fa-volume-up"> Nagłośnienie</label><br>
+        <label><input type="checkbox" value="Klimatyzacja" data-icon="fa-fan"> Klimatyzacja</label><br>
+        <label><input type="checkbox" value="Tablica" data-icon="fa-chalkboard"> Tablica</label><br>
+        <label><input type="checkbox" value="Mikrofon" data-icon="fa-microphone"> Mikrofon</label><br>
+        <label><input type="checkbox" value="Podium" data-icon="fa-podium"> Podium</label><br>
+        <label><input type="checkbox" value="Przystosowana dla niepełnosprawnych" data-icon="fa-wheelchair"> Przystosowana dla niepełnosprawnych</label><br>
+    </div>
+    <button onclick="generateImage()">Generuj obraz</button>
+    <a id="download-link" style="display: none;" download="ikony_konferencji.png">Pobierz obraz</a>
+    <canvas id="canvas" width="800" height="120"></canvas>
+
+    <script>
+        function generateImage() {
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+
+            // Wyczyszczenie canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Ustawienia stylu tła
+            ctx.fillStyle = 'rgba(255, 255, 255, 0)'; // Tło przezroczyste
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Kolor tekstu i ikon
+            ctx.fillStyle = '#203253'; // Kolor ikon
+
+            const checkboxes = document.querySelectorAll('.checkbox-container input[type="checkbox"]:checked');
+            const elements = [];
+            const lastElement = []; // Zmienna do przechowywania "Przystosowana dla niepełnosprawnych"
+
+            // Oddzielnie zapisujemy "Przystosowana dla niepełnosprawnych" na końcu
+            checkboxes.forEach((checkbox) => {
+                const iconClass = checkbox.getAttribute('data-icon');
+                const text = checkbox.value;
+
+                if (text === "Przystosowana dla niepełnosprawnych") {
+                    lastElement.push({ iconClass, text });
+                } else {
+                    elements.push({ iconClass, text });
+                }
+            });
+
+            const allElements = [...elements, ...lastElement];
+
+            let x = 20; // Pozycja początkowa na osi X
+            let y = 60; // Początkowa pozycja na osi Y
+            const lineHeight = 40; // Odstęp między liniami
+            let lineWidth = 0; // Szerokość aktualnej linii
+
+            // Dynamiczna szerokość canvasu
+            let dynamicWidth = 800;
+
+            allElements.forEach((item) => {
+                const { iconClass, text } = item;
+
+                // Zmiana czcionki ikony FontAwesome
+                ctx.font = '24px FontAwesome';
+                const icon = getFontAwesomeIcon(iconClass);
+                ctx.fillText(icon, x, y); // Rysowanie ikony
+
+                // Dodanie tekstu obok ikony
+                ctx.font = '14px Georgia'; // Zmniejszenie czcionki tekstu
+                const textWidth = ctx.measureText(text).width;
+                ctx.fillText(text, x + 30, y); // Rysowanie tekstu obok ikony
+
+                // Zaktualizowanie szerokości linii
+                lineWidth = x + 30 + textWidth + 20;
+
+                // Przesunięcie w prawo na następny element
+                x += 150;
+
+                // Jeżeli ikony nie mieszczą się w szerokości, zwiększamy szerokość canvasu
+                if (lineWidth > dynamicWidth) {
+                    dynamicWidth = lineWidth + 20; // Zwiększamy szerokość o margines
+                    canvas.width = dynamicWidth; // Ustawiamy nową szerokość
+                }
+
+                // Przepełnienie linii - przejście do nowej linii
+                if (x + 150 > dynamicWidth) {
+                    x = 20;
+                    y += lineHeight;
+                }
+            });
+
+            // Pokazanie linku do pobrania
+            const downloadLink = document.getElementById('download-link');
+            downloadLink.style.display = 'inline';
+            downloadLink.href = canvas.toDataURL('image/png');
+        }
+
+        function getFontAwesomeIcon(iconClass) {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = `<i class="fa ${iconClass}"></i>`;
+            document.body.appendChild(tempDiv);
+            const icon = window.getComputedStyle(tempDiv.firstChild, ':before').content;
+            document.body.removeChild(tempDiv);
+            return icon.replace(/"/g, '');
+        }
+    </script>
+</body>
+</html>
